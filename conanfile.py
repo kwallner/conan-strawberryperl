@@ -6,41 +6,24 @@ import os
 
 class StrawberryperlConan(ConanFile):
     name = "strawberryperl"
-    version = "5.26.0"
+    version = "5.26.2.1"
     license = "GNU Public License or the Artistic License"
-    url = "https://github.com/lasote/conan-strawberryperl"
-    if conan_version < Version("0.99"):
-        settings = "os", "arch"
-    else:
-        settings = "os_build", "arch_build"
+    url = "https://github.com/kwallner/conan-strawberryperl"
+    settings = {"os_build": ["Windows"], "arch_build" : ["x86_64", "x86"]}
     description = "Strawbery Perl for Windows. Useful as build_require"
-    short_paths = True
+    no_copy_source = True
 
-    @property
-    def arch(self):
-        return self.settings.get_safe("arch_build") or self.settings.get_safe("arch")
-
-    @property
-    def os(self):
-        return self.settings.get_safe("os_build") or self.settings.get_safe("os")
-
-    def configure(self):
-        if self.os != "Windows":
-            raise Exception("Only windows supported for strawberry perl")
+    def source(self):
+        tools.download("http://strawberryperl.com/download/%s/strawberry-perl-%s-64bit-portable.zip" % (self.version, self.version), "%s.zip" % "x86_64")
+        tools.download("http://strawberryperl.com/download/%s/strawberry-perl-%s-32bit-portable.zip" % (self.version, self.version), "%s.zip" % "x86")
 
     def build(self):
-        installer = {"x86": "strawberry-perl-5.26.0.1-32bit-portable.zip",
-                     "x86_64": "strawberry-perl-5.26.0.1-64bit-portable.zip"}[str(self.arch)]
-        url = "http://strawberryperl.com/download/5.26.0.1/%s" % installer
-        tools.download(url, filename="perl.zip")
-        tools.unzip("perl.zip")
-        os.unlink("perl.zip")
-
+        tools.unzip(os.path.join(self.source_folder,  "%s.zip" % self.settings.arch_build))
+ 
     def package(self):
-        self.copy("*", keep_path=True)
+        self.copy("*", keep_path=True, excludes = "*.zip")
         self.copy("licenses/License.rtf*", dst=".", keep_path=False, ignore_case=True)
 
     def package_info(self):
         self.env_info.PATH.append(os.path.join(self.package_folder, "perl", "bin"))
         self.env_info.PATH.append(os.path.join(self.package_folder, "c", "bin"))
-
